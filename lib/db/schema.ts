@@ -12,3 +12,10 @@ export const chatHistory = pgTable('chat_history', {
   messages: jsonb('messages').notNull(), 
   createdAt: timestamp('created_at').defaultNow(),
 });
+
+export const messageFeedback = pgTable('message_feedback', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  messageId: text('message_id').notNull(), // ID del mensaje del AI SDK
+  rating: text('rating').notNull(), // 👍 o 👎 
+  createdAt: timestamp('created_at').defaultNow(),
+});

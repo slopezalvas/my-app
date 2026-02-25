@@ -21,7 +21,7 @@ export async function savePreference(key: string, value: string) {
   }
 }
 
-/**  GET preferencias para el prompt del sistema.*/
+/**  GET preferencias del usuario para el prompt del sistema.*/
 export async function getPreferences() {
   try {
     const prefs = await db.select().from(userPreferences);

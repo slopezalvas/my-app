@@ -8,17 +8,8 @@ import { useRef, useEffect, useState } from 'react';
 export function ChatBox() {
   const [showDebug, setShowDebug] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
-
-  /**
-   * Hook de Vercel AI SDK
-   * setMessages nos permite inyectar el historial que traigamos de la DB
-   */
   const { messages, input, handleInputChange, handleSubmit, isLoading, error, setMessages } = useChat();
 
-  /**
-   * CRITERIO TÉCNICO: Carga de historial persistente
-   * Cuando se abre la app, consultamos nuestro endpoint de historial
-   */
   useEffect(() => {
     async function loadHistory() {
       try {
@@ -34,7 +25,6 @@ export function ChatBox() {
     loadHistory();
   }, [setMessages]);
 
-  // Auto-scroll suave hacia el último mensaje
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -44,7 +34,7 @@ export function ChatBox() {
   return (
     <div className="flex h-screen w-full bg-[#050505] text-zinc-100 overflow-hidden font-sans">
       
-      {/* --- COLUMNA DEL CHAT --- */}
+      {/*  COLUMNA DEL CHAT */}
       <div className="flex-1 flex flex-col min-w-0 relative bg-black">
         
         {/* Header Minimalista */}
@@ -134,17 +124,11 @@ export function ChatBox() {
               </svg>
             </button>
           </form>
-          <div className="mt-4 flex justify-center gap-4 text-[9px] uppercase tracking-[0.2em] text-zinc-700 font-bold">
-            <span>GPT-4o</span>
-            <span>•</span>
-            <span>PostgreSQL</span>
-            <span>•</span>
-            <span>TMDB API</span>
-          </div>
+          
         </div>
       </div>
 
-      {/* --- PANEL DE DEBUG (DERECHA) --- */}
+      {/* PANEL DE DEBUG  */}
       {showDebug && (
         <aside className="w-[450px] border-l border-zinc-900 bg-[#070707] z-40 animate-in slide-in-from-right duration-500">
           <DebugPanel messages={messages} />

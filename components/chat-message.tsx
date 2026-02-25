@@ -1,3 +1,6 @@
+'use client';
+
+import { useState } from 'react'; 
 import { Message } from 'ai';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -5,6 +8,22 @@ import Image from 'next/image';
 
 export function ChatMessage({ message }: { message: Message }) {
   const isUser = message.role === 'user';
+
+  const [voted, setVoted] = useState<'like' | 'dislike' | null>(null);
+
+  const handleFeedback = async (rating: 'like' | 'dislike') => {
+    if (voted) return; 
+    setVoted(rating);
+    try {
+      await fetch('/api/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messageId: message.id, rating }),
+      });
+    } catch (error) {
+      console.error("Error enviando feedback:", error);
+    }
+  };
 
   return (
     <div className={`flex w-full mb-8 ${isUser ? 'justify-end' : 'justify-start'}`}>
@@ -23,7 +42,6 @@ export function ChatMessage({ message }: { message: Message }) {
           <ReactMarkdown 
             remarkPlugins={[remarkGfm]}
             components={{
-              // Tarjeta de película optimizada
               img: ({ src, alt }) => {
                 if (!src || typeof src !== 'string') return null;
                 return (
@@ -61,6 +79,35 @@ export function ChatMessage({ message }: { message: Message }) {
              </span>
           </div>
         ))}
+
+        {/*  SISTEMA DE FEEDBACK */}
+        {!isUser && (
+          <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between">
+            <div className="flex gap-2">
+              <button 
+                aria-label="Me sirvió"
+                onClick={() => handleFeedback('like')}
+                disabled={!!voted}
+                className={`p-1.5 rounded-md hover:bg-white/5 transition-colors ${voted === 'like' ? 'text-green-500' : 'text-zinc-500'}`}
+              >
+                👍
+              </button>
+              <button 
+                aria-label="No me sirvió"
+                onClick={() => handleFeedback('dislike')}
+                disabled={!!voted}
+                className={`p-1.5 rounded-md hover:bg-white/5 transition-colors ${voted === 'dislike' ? 'text-red-500' : 'text-zinc-500'}`}
+              >
+                👎
+              </button>
+            </div>
+            {voted && (
+              <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-tighter animate-pulse">
+                Feedback recibido
+              </span>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
