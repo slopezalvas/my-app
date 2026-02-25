@@ -101,13 +101,12 @@ Se utilizó el API moderno `useSyncExternalStore` para gestionar la persistencia
 
 La aplicación cuenta con una lógica de auto-semillado. Si la tabla de géneros en la DB está vacía, el sistema sincroniza automáticamente los datos desde TMDB en la primera consulta, optimizando la latencia y la experiencia del desarrollador (DX).
 
-
 ## ⚙️ Instalación Local
 
 1. Clonar el repositorio:
 
    ```bash
-   git clone [URL_DE_TU_REPOSITORIO]
+   git clone https://github.com/slopezalvas/my-app
    cd my-app
 2. Instalar dependencias:
 
@@ -116,6 +115,7 @@ La aplicación cuenta con una lógica de auto-semillado. Si la tabla de géneros
 3. Configurar variables de entorno (.env.local):
 
     ```env
+    AI_GATEWAY_API_KEY=tu_api_gatewat_key_aqui
     OPENAI_API_KEY=tu_key_aqui
     DATABASE_URL=tu_url_de_neon_aqui
     TMDB_TOKEN=tu_bearer_token_de_tmdb_aqui
