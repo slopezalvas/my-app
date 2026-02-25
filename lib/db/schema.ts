@@ -1,11 +1,14 @@
-import { pgTable, text, timestamp, uuid, jsonb } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, uuid, jsonb, unique, integer } from 'drizzle-orm/pg-core';
 
 export const userPreferences = pgTable('user_preferences', {
   id: uuid('id').defaultRandom().primaryKey(),
-  key: text('key').notNull().unique(), 
+  userId: text('user_id').notNull(), 
+  key: text('key').notNull(), 
   value: text('value').notNull(),
   updatedAt: timestamp('updated_at').defaultNow(),
-});
+}, (table) => ({
+  unq: unique().on(table.userId, table.key),
+}));
 
 export const chatHistory = pgTable('chat_history', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -18,4 +21,9 @@ export const messageFeedback = pgTable('message_feedback', {
   messageId: text('message_id').notNull(), // ID del mensaje del AI SDK
   rating: text('rating').notNull(), // 👍 o 👎 
   createdAt: timestamp('created_at').defaultNow(),
+});
+
+export const genres = pgTable('genres', {
+  id: integer('id').primaryKey(), 
+  name: text('name').notNull(),
 });

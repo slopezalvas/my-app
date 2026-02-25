@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Message } from 'ai';
 
-/** Hook personalizado para cargar el historial de chat desde la base de datos. */
+/** Hook para cargar el historial de chat desde la db. */
 export function useChatHistory(setMessages: (messages: Message[]) => void) {
   useEffect(() => {
     const loadHistory = async () => {

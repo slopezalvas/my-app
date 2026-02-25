@@ -7,23 +7,28 @@ import { useRef, useEffect, useState } from 'react';
 
 export function ChatBox() {
   const [showDebug, setShowDebug] = useState(false);
+  const [userId, setUserId] = useState<string>('invitado');
   const scrollRef = useRef<HTMLDivElement>(null);
-  const { messages, input, handleInputChange, handleSubmit, isLoading, error, setMessages } = useChat();
 
+  // Inicialización segura del userId (evita errores de Hydration)
   useEffect(() => {
-    async function loadHistory() {
-      try {
-        const response = await fetch('/api/history');
-        const history = await response.json();
-        if (history && history.length > 0) {
-          setMessages(history);
-        }
-      } catch (err) {
-        console.error("Error cargando historial:", err);
-      }
+    let id = localStorage.getItem('chat_user_id');
+    if (!id) {
+      id = 'user_' + Math.random().toString(36).substring(7);
+      localStorage.setItem('chat_user_id', id);
     }
-    loadHistory();
-  }, [setMessages]);
+    setUserId(id);
+  }, []);
+
+  const { messages, input, handleInputChange, handleSubmit, isLoading, error, setMessages } = useChat({ 
+    body: { userId } // Enviamos el ID real al backend
+  });
+
+  const handleNewChat = () => {
+    if (confirm('¿Quieres limpiar la pantalla? El bot seguirá recordando quién eres.')) {
+      setMessages([]); 
+    }
+  };
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -34,10 +39,10 @@ export function ChatBox() {
   return (
     <div className="flex h-screen w-full bg-[#050505] text-zinc-100 overflow-hidden font-sans">
       
-      {/*  COLUMNA DEL CHAT */}
+      {/* COLUMNA PRINCIPAL DEL CHAT */}
       <div className="flex-1 flex flex-col min-w-0 relative bg-black">
         
-        {/* Header Minimalista */}
+        {/* HEADER: Acciones agrupadas a la derecha */}
         <header className="h-14 border-b border-zinc-900 flex items-center justify-between px-6 bg-black/80 backdrop-blur-md z-30">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-blue-600 shadow-[0_0_8px_rgba(37,99,235,0.6)]" />
@@ -46,22 +51,30 @@ export function ChatBox() {
             </h1>
           </div>
           
-          <button 
-            onClick={() => setShowDebug(!showDebug)}
-            className={`text-[9px] font-mono px-3 py-1 rounded-md border transition-all ${
-              showDebug 
-                ? 'bg-blue-600/10 border-blue-500/50 text-blue-400' 
-                : 'border-zinc-800 text-zinc-500 hover:bg-zinc-900'
-            }`}
-          >
-            {showDebug ? 'CLOSE_DEBUG' : 'OPEN_DEBUG'}
-          </button>
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={handleNewChat}
+              className="text-[9px] font-mono px-3 py-1.5 rounded-md border border-zinc-800 text-zinc-500 hover:bg-zinc-900 hover:text-zinc-300 transition-all active:scale-95"
+            >
+              NEW_CHAT
+            </button>
+            <button 
+              onClick={() => setShowDebug(!showDebug)}
+              className={`text-[9px] font-mono px-3 py-1.5 rounded-md border transition-all active:scale-95 ${
+                showDebug 
+                  ? 'bg-blue-600/10 border-blue-500/50 text-blue-400' 
+                  : 'border-zinc-800 text-zinc-500 hover:bg-zinc-900'
+              }`}
+            >
+              {showDebug ? 'CLOSE_DEBUG' : 'OPEN_DEBUG'}
+            </button>
+          </div>
         </header>
 
-        {/* Feed de Mensajes */}
+        {/* FEED DE MENSAJES */}
         <div 
           ref={scrollRef} 
-          className="flex-1 overflow-y-auto px-4 pt-10 pb-32 scroll-smooth custom-scrollbar"
+          className="flex-1 overflow-y-auto px-4 pt-10 pb-32 scroll-smooth"
         >
           <div className="max-w-3xl mx-auto w-full">
             {messages.length === 0 && !isLoading && (
@@ -70,15 +83,15 @@ export function ChatBox() {
                   🍿
                 </div>
                 <h2 className="text-2xl font-bold text-white tracking-tight">Tu cartelera personal</h2>
-                <p className="text-zinc-500 text-sm mt-2 max-w-xs">
-                  Dime qué te gusta y buscaré las mejores películas para ti hoy.
+                <p className="text-zinc-500 text-sm mt-2 max-w-xs italic">
+                  Hola. Dime qué te gusta y buscaré las mejores películas para ti.
                 </p>
               </div>
             )}
             
-            <div className="space-y-2">
-              {messages.map((m) => (
-                <ChatMessage key={m.id} message={m} />
+            <div className="space-y-4">
+              {messages.map((m, index) => (
+                <ChatMessage key={m.id || `msg-${index}`} message={m} />
               ))}
             </div>
 
@@ -89,26 +102,26 @@ export function ChatBox() {
                   <span className="w-1 h-1 bg-zinc-600 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
                   <span className="w-1 h-1 bg-zinc-600 rounded-full animate-bounce"></span>
                 </span>
-                Analizando datos...
+                Procesando...
               </div>
             )}
 
             {error && (
               <div className="mx-auto max-w-md p-4 bg-red-500/5 border border-red-500/20 rounded-2xl text-red-500 text-[11px] text-center mt-8">
-                ✕ Error crítico de sistema. Revisa la consola o las variables de entorno.
+                ✕ Error de conexión. Revisa las API Keys.
               </div>
             )}
           </div>
         </div>
 
-        {/* Barra de Entrada de Texto */}
-        <div className="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-black via-black/90 to-transparent z-20">
+        {/* ÁREA DE INPUT FIJA AL FINAL */}
+        <div className="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-black via-black/95 to-transparent z-20">
           <form 
             onSubmit={handleSubmit} 
             className="max-w-3xl mx-auto relative"
           >
             <input
-              className="w-full bg-zinc-900/40 border border-zinc-800/50 rounded-2xl pl-6 pr-14 py-4 text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all backdrop-blur-md shadow-2xl"
+              className="w-full bg-zinc-900/40 border border-zinc-800/50 rounded-2xl pl-6 pr-14 py-4 text-sm text-zinc-100 placeholder:text-zinc-700 focus:outline-none focus:ring-1 focus:ring-blue-500/30 transition-all backdrop-blur-md"
               value={input}
               placeholder="Escribe el nombre de una película o un género..."
               onChange={handleInputChange}
@@ -117,20 +130,19 @@ export function ChatBox() {
             <button
               type="submit"
               disabled={isLoading || !input.trim()}
-              className="absolute right-2 top-1/2 -translate-y-1/2 bg-blue-600 hover:bg-blue-500 disabled:bg-zinc-800 disabled:text-zinc-600 text-white w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-95 shadow-lg shadow-blue-900/20"
+              className="absolute right-2 top-1/2 -translate-y-1/2 bg-blue-600 hover:bg-blue-500 disabled:bg-zinc-800 disabled:text-zinc-600 text-white w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-95 shadow-lg"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-white">
                 <path d="M3.105 2.289a.75.75 0 0 0-.826.95l1.414 4.925L10.788 10l-7.095 1.836-1.414 4.925a.75.75 0 0 0 .826.95 44.82 44.82 0 0 0 16.202-7.397.75.75 0 0 0 0-1.218A44.82 44.82 0 0 0 3.105 2.289Z" />
               </svg>
             </button>
           </form>
-          
         </div>
       </div>
 
-      {/* PANEL DE DEBUG  */}
+      {/* PANEL DE DEBUG LATERAL */}
       {showDebug && (
-        <aside className="w-[450px] border-l border-zinc-900 bg-[#070707] z-40 animate-in slide-in-from-right duration-500">
+        <aside className="w-[450px] border-l border-zinc-900 bg-[#070707] z-40 animate-in slide-in-from-right duration-300 shadow-2xl">
           <DebugPanel messages={messages} />
         </aside>
       )}

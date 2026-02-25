@@ -8,8 +8,9 @@ import Image from 'next/image';
 
 export function ChatMessage({ message }: { message: Message }) {
   const isUser = message.role === 'user';
-
   const [voted, setVoted] = useState<'like' | 'dislike' | null>(null);
+
+  const hasTextContent = typeof message.content === 'string' && message.content.trim().length > 0;
 
   const handleFeedback = async (rating: 'like' | 'dislike') => {
     if (voted) return; 
@@ -39,36 +40,42 @@ export function ChatMessage({ message }: { message: Message }) {
         </span>
 
         <div className="prose prose-invert prose-sm max-w-none">
-          <ReactMarkdown 
-            remarkPlugins={[remarkGfm]}
-            components={{
-              img: ({ src, alt }) => {
-                if (!src || typeof src !== 'string') return null;
-                return (
-                  <span className="block my-4">
-                    <span className="relative block aspect-[2/3] w-48 overflow-hidden rounded-xl border border-zinc-700 shadow-2xl">
-                      <Image 
-                        src={src} 
-                        alt={alt || 'Poster'}
-                        fill
-                        className="object-cover"
-                        sizes="200px"
-                      />
+          {hasTextContent ? (
+            <ReactMarkdown 
+              remarkPlugins={[remarkGfm]}
+              components={{
+                img: ({ src, alt }) => {
+                  if (!src || typeof src !== 'string') return null;
+                  return (
+                    <span className="block my-4">
+                      <span className="relative block aspect-[2/3] w-48 overflow-hidden rounded-xl border border-zinc-700 shadow-2xl">
+                        <Image 
+                          src={src} 
+                          alt={alt || 'Poster'}
+                          fill
+                          className="object-cover"
+                          sizes="200px"
+                        />
+                      </span>
                     </span>
-                  </span>
-                );
-              },
-              p: ({ children }) => <p className="mb-3 last:mb-0 leading-relaxed text-[15px]">{children}</p>,
-              h2: ({ children }) => <h2 className="text-lg font-bold text-white mb-2 mt-4">{children}</h2>,
-              blockquote: ({ children }) => (
-                <blockquote className="border-l-4 border-blue-500 pl-4 italic text-zinc-400 my-4 bg-white/5 py-2 rounded-r-lg">
-                  {children}
-                </blockquote>
-              ),
-            }}
-          >
-            {message.content}
-          </ReactMarkdown>
+                  );
+                },
+                p: ({ children }) => <p className="mb-3 last:mb-0 leading-relaxed text-[15px]">{children}</p>,
+                h2: ({ children }) => <h2 className="text-lg font-bold text-white mb-2 mt-4">{children}</h2>,
+                blockquote: ({ children }) => (
+                  <blockquote className="border-l-4 border-blue-500 pl-4 italic text-zinc-400 my-4 bg-white/5 py-2 rounded-r-lg">
+                    {children}
+                  </blockquote>
+                ),
+              }}
+            >
+              {message.content}
+            </ReactMarkdown>
+          ) : (
+            !isUser && (
+              <p className="text-zinc-500 text-xs italic animate-pulse">Procesando información...</p>
+            )
+          )}
         </div>
 
         {/* Badges de las Tools */}
@@ -80,8 +87,8 @@ export function ChatMessage({ message }: { message: Message }) {
           </div>
         ))}
 
-        {/*  SISTEMA DE FEEDBACK */}
-        {!isUser && (
+        {/* SISTEMA DE FEEDBACK */}
+        {!isUser && hasTextContent && (
           <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between">
             <div className="flex gap-2">
               <button 
