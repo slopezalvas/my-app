@@ -1,80 +1,106 @@
 # 🎬 Gleni Cine Assistant - AI Chatbot
 
-Este proyecto es un asistente de cine inteligente capaz de razonar, recordar los gustos del usuario y buscar películas en tiempo real. No es un simple "wrapper" de ChatGPT; es un sistema integrado que utiliza herramientas nativas de IA, persistencia en base de datos y consumo de APIs externas.
+Este proyecto es un asistente de cine inteligente capaz de razonar, recordar los gustos del usuario y buscar películas en tiempo real. No es un simple "wrapper" de ChatGPT; es un sistema integrado que utiliza herramientas nativas de IA, persistencia avanzada en base de datos y consumo de APIs externas con lógica de filtrado profesional.
 
-**Link del Deploy:** [COPIA_AQUI_TU_LINK_DE_VERCEL]
+**Link del Deploy:** [https://my-app-mu-eight-98.vercel.app](https://my-app-mu-eight-98.vercel.app)
 
----
+
 
 ## 🚀 Propuesta de Valor
 
 ### El Problema que resuelve
 
-La búsqueda de películas suele ser fragmentada. Los usuarios deben saltar entre aplicaciones para buscar recomendaciones y recordar qué géneros les gustan.
+La búsqueda de películas suele ser fragmentada y carece de personalización real. Los usuarios deben navegar por menús complejos o repetir sus preferencias en cada sesión.
 
 ### Nuestra Solución
 
-**Cine Assistant** centraliza la experiencia. El bot entiende el contexto, consulta una base de datos de películas real (TMDB) y guarda de forma persistente las preferencias del usuario para que cada charla sea más personalizada que la anterior.
+**Cine Assistant** centraliza la experiencia mediante una IA con "memoria" a largo plazo. El bot no solo busca títulos, sino que **descubre** contenido basándose en un perfil de usuario que se construye dinámicamente en una base de datos PostgreSQL, ofreciendo una experiencia conversacional, multilingüe y visualmente rica.
 
 ### Público Objetivo
 
-Entusiastas del cine que buscan una recomendación rápida y personalizada sin navegar por menús complejos.
+Entusiastas del cine que buscan recomendaciones precisas y una interfaz minimalista pero potente.
 
----
 
 ## 🛠️ Stack Tecnológico
 
-- **IA Engine:** OpenAI GPT-4o mediante **Vercel AI SDK**.
-- **Frontend:** Next.js 15 (App Router) + Tailwind CSS.
-- **Base de Datos:** PostgreSQL (Neon.tech).
-- **ORM:** Drizzle ORM (Type-safe y ligero).
+- **IA Engine:** OpenAI GPT-4o mediante **Vercel AI SDK** (Modelos de lenguaje y streaming).
+- **Frontend:** **Next.js 15** (App Router) + Tailwind CSS.
+- **Base de Datos:** PostgreSQL (**Neon.tech**).
+- **ORM:** **Drizzle ORM** (Manejo de esquemas relacionales y tipos JSONB).
 - **API Externa:** TMDB (The Movie Database).
-- **Renderizado:** React Markdown + Remark GFM para contenido enriquecido.
-- **Validación:** Zod para la estructura de las Tools.
+- **Validación:** **Zod** (Validación estricta de contratos de API y esquemas de Tools).
+- **Estado y Persistencia:** `useSyncExternalStore` de React para manejo puro de estados externos.
 
----
+
+## 📂 Estructura del Proyecto
+
+``` text
+my-app/
+├── app/
+│   ├── api/
+│   │   ├── chat/route.ts      # Orquestador principal del LLM y Tools
+│   │   ├── history/route.ts   # Recuperación de historial persistente
+│   │   └── feedback/route.ts  # Procesamiento de ratings (👍/👎)
+│   ├── layout.tsx             # Configuración de fuentes y Root Provider
+│   └── page.tsx               # Contenedor principal de la aplicación
+├── components/
+│   ├── chat-box.tsx           # UI principal del Chat (Estado y lógica de UI)
+│   ├── chat-message.tsx       # Renderizado de mensajes (Markdown + Posters)
+│   ├── debug-panel.tsx        # Visualización de logs y razonamiento del LLM
+│   └── client-only.tsx        # Wrapper para evitar errores de hidratación
+├── lib/
+│   ├── ai/
+│   │   ├── prompts.ts         # Definición de System Prompts dinámicos
+│   │   └── tools.ts           # Definición y ejecución de Tool Calling
+│   ├── db/
+│   │   ├── index.ts           # Conexión con Neon (Postgres) via Drizzle
+│   │   └── schema.ts          # Definición de tablas y esquemas relacionales
+│   └── services/
+│       ├── movies.ts          # Integración con TMDB (Búsqueda y Discovery)
+│       ├── genres.ts          # Sincronización y manejo de géneros
+│       ├── preferences.ts     # CRUD de preferencias de usuario
+│       └── chat.ts            # Lógica de guardado de historial
+├── drizzle.config.ts          # Configuración de migraciones de la DB
+└── next.config.ts             # Configuración de Next.js (Remote Patterns de imágenes)
+```
+
 
 ## 📋 User Stories
 
-1. **Búsqueda Inteligente:**
+1. **Búsqueda e Intención Inteligente:**
    - **Como** usuario cinéfilo,
-   - **Quiero** pedir recomendaciones basadas en temas o géneros (ej. "recomiéndame un thriller"),
-   - **Para** obtener resultados reales con posters y descripciones actualizadas.
+   - **Quiero** pedir recomendaciones complejas (ej. "dame un thriller de los 90"),
+   - **Para** obtener resultados ordenados por popularidad con posters y sinopsis reales.
 
 2. **Memoria Persistente de Gustos:**
    - **Como** usuario recurrente,
-   - **Quiero** que el bot recuerde mis géneros favoritos,
-   - **Para** que no tenga que repetir mis preferencias en cada nueva sesión.
+   - **Quiero** que el bot aprenda mi nombre e intereses,
+   - **Para** recibir un trato personalizado sin tener que reintroducir mis datos.
 
-3. **Historial de Conversación:**
+3. **Feedback y Mejora Continua:**
    - **Como** usuario,
-   - **Quiero** refrescar la pestaña y que mis mensajes anteriores sigan ahí,
-   - **Para** retomar mi búsqueda donde la dejé.
+   - **Quiero** calificar las respuestas del bot (👍/👎),
+   - **Para** que el sistema registre la calidad de las recomendaciones.
 
----
 
-## 🧠 Decisiones Técnicas y Trade-offs (Criterio Senior)
+## 🧠 Decisiones Técnicas y Criterio de Ingeniería
 
-### 1. Regla Anti-"Wrapper"
+### 1. Lógica de "Discovery" sobre "Search"
 
-El bot demuestra criterio técnico real mediante:
+A diferencia de implementaciones básicas que solo usan búsqueda por texto, este bot utiliza el endpoint `discover/movie` de TMDB. Esto permite al LLM filtrar por **IDs de género dinámicos**, año de estreno y popularidad, garantizando resultados de alta calidad frente a coincidencias textuales irrelevantes.
 
-- **Tool Calling Autónomo:** El LLM decide cuándo llamar a la API de películas o cuándo guardar una preferencia en la base de datos basándose en el contexto.
-- **Limpieza de Datos:** Las respuestas de la API externa son filtradas en el servidor (`lib/services/movies.ts`) antes de enviarlas al LLM para optimizar el contexto y evitar "alucinaciones".
+### 2. Programación Defensiva con Zod
 
-### 2. Arquitectura de Persistencia
+Se implementaron esquemas de validación con **Zod** para todas las respuestas de la API externa. Esto asegura que, ante cualquier cambio inesperado en el contrato de TMDB, la aplicación "falle con gracia" (Graceful Failure) en lugar de romper la interfaz del usuario o el contexto del LLM.
 
-Elegí **Drizzle ORM con Neon (Postgres)** porque:
+### 3. Pureza en React y Manejo de Hidratación
 
-- Permite manejar la persistencia de forma asíncrona mediante el callback `onFinish` del SDK de IA.
-- Se implementó una lógica de `Upsert` para las preferencias del usuario, garantizando que los datos sean únicos y siempre actuales.
+Se utilizó el API moderno `useSyncExternalStore` para gestionar la persistencia del `userId` en `localStorage`. Esto resuelve errores críticos de hidratación en Next.js y garantiza que el componente sea puro e idempotente, cumpliendo con las reglas de renderizado de React 18+.
 
-### 3. Experiencia de Usuario (UX)
+### 4. Sincronización Automática (Auto-Seeding)
 
-- **Streaming:** Implementado para reducir el tiempo de espera percibido (TTFT).
-- **Manejo de Errores de Hidratación:** Se resolvieron conflictos de anidamiento de HTML (div dentro de p) comunes al usar Markdown, asegurando una carga limpia en Next.js.
+La aplicación cuenta con una lógica de auto-semillado. Si la tabla de géneros en la DB está vacía, el sistema sincroniza automáticamente los datos desde TMDB en la primera consulta, optimizando la latencia y la experiencia del desarrollador (DX).
 
----
 
 ## ⚙️ Instalación Local
 
@@ -108,4 +134,5 @@ Elegí **Drizzle ORM con Neon (Postgres)** porque:
 - **Tool Calling:** Capacidad de razonamiento para usar APIs externas.
 - **Panel de Debug:** Consola lateral para visualizar el proceso interno del LLM.
 - **Persistencia Avanzada:** Guardado de historial completo y preferencias específicas.
+- **Multilingüe:** Detección y respuesta automática en el idioma del usuario.
 - **Optimización de Imágenes:** Uso de next/image para el renderizado de posters.
